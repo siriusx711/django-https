@@ -1,13 +1,45 @@
 version: "3.9"
 
+networks:
+  web_saaipro:
+
+
+volumes:
+  certbot-web:
+  proxy-dhparams:
+  certbot-certs:
+
 services:
+  
+  db:
+    image: postgres:14.4
+    container_name: saaipro_db
+    ports:
+      - 5432
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - datavolume:/var/lib/postgresql/data
+    networks:
+      web_saaipro:
+    restart: always
+
   app:
     build:
       context: .
     restart: always
+    env_file:
+      - .env
     environment:
       - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
       - DJANGO_ALLOWED_HOSTS=${DOMAIN}
+    networks:
+      web_saaipro:
+    depends_on:
+      - db
   
   proxy:
     build:
@@ -22,13 +54,20 @@ services:
       - certbot-web:/vol/www
       - proxy-dhparams:/vol/proxy
       - certbot-certs:/etc/letsencrypt
+    env_file:
+      - .env
     environment:
       - DOMAIN=${DOMAIN}
+    networks:
+      web_saaipro:
+
 
   certbot:
     build: 
       context: ./docker/certbot
     command: echo "Skipping..."
+    env_file:
+      - .env
     environment:
       - EMAIL=${ACME_DEFAULT_EMAIL}
       - DOMAIN=${DOMAIN}
@@ -37,9 +76,5 @@ services:
       - certbot-certs:/etc/letsencrypt/
     depends_on:
       - proxy
-        
-
-volumes:
-  certbot-web:
-  proxy-dhparams:
-  certbot-certs:
+    networks:
+      web_saaipro:
