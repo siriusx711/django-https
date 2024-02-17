@@ -20,7 +20,7 @@ services:
       - 443:443
     volumes:
       - certbot-web:/vol/www
-      - proxy-dhparams:/vol/proxy/nginx
+      - proxy-dhparams:/vol/proxy
       - certbot-certs:/etc/letsencrypt
     environment:
       - DOMAIN=${DOMAIN}
